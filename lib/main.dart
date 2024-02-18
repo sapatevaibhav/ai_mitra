@@ -4,12 +4,12 @@ import 'chat_screen.dart';
 
 void main() {
   runApp(
-    const GenerativeAISample(),
+    const Main(),
   );
 }
 
-class GenerativeAISample extends StatelessWidget {
-  const GenerativeAISample({Key? key}) : super(key: key);
+class Main extends StatelessWidget {
+  const Main({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -18,12 +18,13 @@ class GenerativeAISample extends StatelessWidget {
       dark: ThemeData.dark(),
       initial: AdaptiveThemeMode.light,
       builder: (lightTheme, darkTheme) => MaterialApp(
-        title: 'AI Mitra',
         debugShowCheckedModeBanner: false,
         theme: lightTheme,
         darkTheme: darkTheme,
-        home: const ChatScreen(
-          title: 'AI Mitra',
+        home: const Scaffold(
+          body: ChatScreen(
+            title: 'AI Mitra',
+          ),
         ),
       ),
     );

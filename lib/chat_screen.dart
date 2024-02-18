@@ -24,18 +24,31 @@ class _ChatScreenState extends State<ChatScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(
-          widget.title,
+        title: Padding(
+          padding: const EdgeInsets.only(
+            left: 8.0,
+          ),
+          child: Text(
+            widget.title,
+            style: const TextStyle(
+              fontWeight: FontWeight.bold,
+            ),
+          ),
         ),
         actions: [
-          IconButton(
-            icon: const Icon(
-              Icons.settings,
+          Padding(
+            padding: const EdgeInsets.only(
+              right: 8.0,
             ),
-            onPressed: () {
-              openSettingsPopup(
-                  context, _apiKey, (String _) => _initializeGenerativeModel());
-            },
+            child: IconButton(
+              icon: const Icon(
+                Icons.settings,
+              ),
+              onPressed: () {
+                openSettingsPopup(context, _apiKey,
+                    (String _) => _initializeGenerativeModel());
+              },
+            ),
           ),
         ],
       ),

@@ -96,7 +96,7 @@ class DialogUtils {
                             context,
                             MaterialPageRoute(
                               builder: (BuildContext context) =>
-                                  const GenerativeAISample(),
+                                  const Main(),
                             ),
                           );
                         } else {
