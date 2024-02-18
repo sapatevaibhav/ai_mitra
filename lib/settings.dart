@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:ai_mitra/utils.dart';
-void openSettingsPopup(BuildContext context, String apiKey,
-    Function(String) initializeGenerativeModel) {
+
+void openSettingsPopup(
+  BuildContext context,
+  String apiKey,
+  Function(String) initializeGenerativeModel,
+) {
   showDialog(
     context: context,
     builder: (BuildContext context) {
@@ -13,11 +17,16 @@ void openSettingsPopup(BuildContext context, String apiKey,
             mainAxisSize: MainAxisSize.min,
             children: [
               ListTile(
-                title: const Text('Change API Key'),
+                title: const Text(
+                  'Change API Key',
+                ),
                 onTap: () {
                   Navigator.of(context).pop();
                   DialogUtils.showApiKeyDialog(
-                      context, apiKey, initializeGenerativeModel);
+                    context,
+                    apiKey,
+                    initializeGenerativeModel,
+                  );
                 },
               ),
             ],
