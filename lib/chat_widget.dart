@@ -1,5 +1,7 @@
 // ignore_for_file: use_build_context_synchronously
 
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:google_generative_ai/google_generative_ai.dart';
@@ -21,6 +23,7 @@ class _ChatWidgetState extends State<ChatWidget> {
   final FocusNode _textFieldFocus = FocusNode();
   bool _loading = false;
   String? _apiKey;
+  List<Message> messages = [];
 
   @override
   void initState() {
@@ -30,10 +33,13 @@ class _ChatWidgetState extends State<ChatWidget> {
 
   Future<void> _getApiKey() async {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
-    final storedApiKey = prefs.getString('api_key',);
+    final storedApiKey = prefs.getString('api_key');
     if (storedApiKey == null) {
       await DialogUtils.showApiKeyDialog(
-          context, _apiKey, _setAndInitializeGenerativeModel,);
+        context,
+        _apiKey,
+        _setAndInitializeGenerativeModel,
+      );
     } else {
       setState(() {
         _apiKey = storedApiKey;
@@ -42,9 +48,7 @@ class _ChatWidgetState extends State<ChatWidget> {
     }
   }
 
-  void _setAndInitializeGenerativeModel(
-    String apiKey,
-  ) {
+  void _setAndInitializeGenerativeModel(String apiKey) {
     setState(() {
       _apiKey = apiKey;
     });
@@ -58,35 +62,43 @@ class _ChatWidgetState extends State<ChatWidget> {
         apiKey: _apiKey!,
       );
       chat = model!.startChat();
+      _loadMessages();
     });
+  }
+
+  Future<void> _loadMessages() async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    final List<String>? messagesJson = prefs.getStringList('messages');
+
+    if (messagesJson != null) {
+      setState(() {
+        messages = messagesJson
+            .map((messageJson) => Message.fromJson(messageJson))
+            .toList();
+      });
+    }
+  }
+
+  Future<void> _saveMessages() async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    final List<String> messagesJson =
+        messages.map((message) => message.toJson()).toList();
+
+    await prefs.setStringList('messages', messagesJson);
   }
 
   @override
   Widget build(BuildContext context) {
     var textFieldDecoration = InputDecoration(
-      contentPadding: const EdgeInsets.all(
-        15,
-      ),
+      contentPadding: const EdgeInsets.all(15),
       hintText: 'Enter a prompt...',
       border: OutlineInputBorder(
-        borderRadius: const BorderRadius.all(
-          Radius.circular(
-            14,
-          ),
-        ),
-        borderSide: BorderSide(
-          color: Theme.of(context).colorScheme.secondary,
-        ),
+        borderRadius: const BorderRadius.all(Radius.circular(14)),
+        borderSide: BorderSide(color: Theme.of(context).colorScheme.secondary),
       ),
       focusedBorder: OutlineInputBorder(
-        borderRadius: const BorderRadius.all(
-          Radius.circular(
-            14,
-          ),
-        ),
-        borderSide: BorderSide(
-          color: Theme.of(context).colorScheme.secondary,
-        ),
+        borderRadius: const BorderRadius.all(Radius.circular(14)),
+        borderSide: BorderSide(color: Theme.of(context).colorScheme.secondary),
       ),
     );
 
@@ -100,36 +112,21 @@ class _ChatWidgetState extends State<ChatWidget> {
             child: _apiKey != null && _apiKey!.isNotEmpty
                 ? ListView.builder(
                     controller: _scrollController,
+                    itemCount: messages.length,
                     itemBuilder: (context, idx) {
-                      var content = chat.history.toList()[idx];
-                      var text = content.parts
-                          .whereType<TextPart>()
-                          .map<String>(
-                            (e) => e.text,
-                          )
-                          .join(
-                            '',
-                          );
                       return MessageWidget(
-                        text: text,
-                        isFromUser: content.role == 'user',
+                        message: messages[idx],
                       );
                     },
-                    itemCount: chat.history.length,
                   )
-                : ListView(
-                    children: const [
-                      Text(
-                        'No API key found. Please provide an API Key.',
-                      ),
-                    ],
+                : const Center(
+                    child: Text(
+                      'No API key found. Please provide an API Key.',
+                    ),
                   ),
           ),
           Padding(
-            padding: const EdgeInsets.symmetric(
-              vertical: 25,
-              horizontal: 15,
-            ),
+            padding: const EdgeInsets.symmetric(vertical: 25, horizontal: 15),
             child: Row(
               children: [
                 Expanded(
@@ -146,20 +143,17 @@ class _ChatWidgetState extends State<ChatWidget> {
                 const SizedBox.square(
                   dimension: 15,
                 ),
-                if (!_loading)
-                  IconButton(
-                    onPressed: () async {
-                      _sendChatMessage(
-                        _textController.text,
-                      );
-                    },
-                    icon: Icon(
-                      Icons.send,
-                      color: Theme.of(context).colorScheme.primary,
-                    ),
-                  )
-                else
-                  const CircularProgressIndicator(),
+                _loading
+                    ? const CircularProgressIndicator()
+                    : IconButton(
+                        onPressed: () {
+                          _sendChatMessage(_textController.text);
+                        },
+                        icon: Icon(
+                          Icons.send,
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
+                      ),
               ],
             ),
           ),
@@ -174,31 +168,24 @@ class _ChatWidgetState extends State<ChatWidget> {
     });
 
     try {
-      var response = await chat.sendMessage(
-        Content.text(message),
-      );
+      var response = await chat.sendMessage(Content.text(message));
       var text = response.text;
 
       if (text == null) {
-        _showError(
-          'No response from API.',
-        );
+        _showError('No response from API.');
         return;
       } else {
         setState(() {
           _loading = false;
+          messages.add(Message(sender: Sender.User, text: message));
+          messages.add(Message(sender: Sender.Bot, text: text));
+          _saveMessages();
         });
       }
     } catch (e) {
       _showError(e.toString());
-      setState(() {
-        _loading = false;
-      });
     } finally {
       _textController.clear();
-      setState(() {
-        _loading = false;
-      });
       _textFieldFocus.requestFocus();
     }
   }
@@ -208,13 +195,9 @@ class _ChatWidgetState extends State<ChatWidget> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: const Text(
-            'Something went wrong',
-          ),
+          title: const Text('Something went wrong'),
           content: SingleChildScrollView(
-            child: SelectableText(
-              message,
-            ),
+            child: SelectableText(message),
           ),
           actions: [
             TextButton(
@@ -223,9 +206,7 @@ class _ChatWidgetState extends State<ChatWidget> {
                 DialogUtils.showApiKeyDialog(
                     context, _apiKey, _setAndInitializeGenerativeModel);
               },
-              child: const Text(
-                'OK',
-              ),
+              child: const Text('OK'),
             )
           ],
         );
@@ -235,48 +216,74 @@ class _ChatWidgetState extends State<ChatWidget> {
 }
 
 class MessageWidget extends StatelessWidget {
-  final String text;
-  final bool isFromUser;
+  final Message message;
 
   const MessageWidget({
     Key? key,
-    required this.text,
-    required this.isFromUser,
+    required this.message,
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      mainAxisAlignment:
-          isFromUser ? MainAxisAlignment.end : MainAxisAlignment.start,
-      children: [
-        Flexible(
-          child: Container(
-            constraints: const BoxConstraints(
-              maxWidth: 600,
-            ),
-            decoration: BoxDecoration(
-              color: isFromUser
-                  ? Theme.of(context).colorScheme.primaryContainer
-                  : Theme.of(context).colorScheme.surfaceVariant,
-              borderRadius: BorderRadius.circular(
-                18,
-              ),
-            ),
-            padding: const EdgeInsets.symmetric(
-              vertical: 15,
-              horizontal: 20,
-            ),
-            margin: const EdgeInsets.only(
-              bottom: 8,
-            ),
-            child: MarkdownBody(
-              selectable: true,
-              data: text,
-            ),
+    final isUserMessage = message.sender == Sender.User;
+    return Align(
+      alignment: isUserMessage ? Alignment.centerRight : Alignment.centerLeft,
+      child: Container(
+        constraints: const BoxConstraints(maxWidth: 600),
+        margin: const EdgeInsets.only(bottom: 8),
+        decoration: BoxDecoration(
+          color: isUserMessage
+              ? Theme.of(context).colorScheme.primary.withOpacity(0.2)
+              : Theme.of(context).colorScheme.secondary.withOpacity(0.2),
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(isUserMessage ? 18 : 0),
+            topRight: Radius.circular(isUserMessage ? 0 : 18),
+            bottomLeft: const Radius.circular(18),
+            bottomRight: const Radius.circular(18),
           ),
         ),
-      ],
+        child: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: MarkdownBody(
+              selectable: true,
+              data: message.text,
+              styleSheet: isUserMessage
+                  ? MarkdownStyleSheet(p: const TextStyle())
+                  : MarkdownStyleSheet(
+                      p: const TextStyle(),
+                    )),
+        ),
+      ),
+    );
+  }
+}
+
+enum Sender {
+  User,
+  Bot,
+}
+
+class Message {
+  final Sender sender;
+  final String text;
+
+  Message({
+    required this.sender,
+    required this.text,
+  });
+
+  String toJson() {
+    return jsonEncode({
+      'sender': sender.index,
+      'text': text,
+    });
+  }
+
+  factory Message.fromJson(String json) {
+    final Map<String, dynamic> map = jsonDecode(json);
+    return Message(
+      sender: Sender.values[map['sender']],
+      text: map['text'],
     );
   }
 }
