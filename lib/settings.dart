@@ -1,6 +1,9 @@
+// ignore_for_file: prefer_const_constructors, use_build_context_synchronously
+
 import 'package:flutter/material.dart';
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:ai_mitra/utils.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 void openSettingsPopup(
@@ -20,7 +23,7 @@ void openSettingsPopup(
           'Settings',
         ),
         content: SizedBox(
-          height: 200,
+          height: 300,
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -107,7 +110,7 @@ void openSettingsPopup(
                   borderRadius: BorderRadius.circular(
                     10,
                   ),
-                  color: Colors.yellow.withOpacity(
+                  color: Colors.orange.withOpacity(
                     0.3,
                   ),
                 ),
@@ -119,11 +122,12 @@ void openSettingsPopup(
                   ),
                   leading: const Icon(
                     Icons.code_outlined,
+                    color: Colors.orange,
                   ),
-                  title: Text(
+                  title: const Text(
                     'Source Code',
                     style: TextStyle(
-                      color: isDarkMode ? Colors.white60 : Colors.black,
+                      color: Colors.orange,
                     ),
                   ),
                   onTap: () {
@@ -132,6 +136,40 @@ void openSettingsPopup(
                         "https://github.com/sapatevaibhav/ai_mitra",
                       ),
                     );
+                  },
+                ),
+              ),
+              const SizedBox(
+                height: 10,
+              ),
+              Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(
+                    10,
+                  ),
+                  color: Colors.redAccent.withOpacity(
+                    0.3,
+                  ),
+                ),
+                child: ListTile(
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(
+                      10,
+                    ),
+                  ),
+                  leading: const Icon(
+                    Icons.clear_rounded,
+                    color: Colors.red,
+                  ),
+                  title: const Text(
+                    'Clear History',
+                    style: TextStyle(
+                      color: Colors.red,
+                    ),
+                  ),
+                  onTap: () {
+                    Navigator.of(context).pop();
+                    clearStoredMessages(context);
                   },
                 ),
               ),
@@ -152,5 +190,47 @@ void _switchTheme(BuildContext context) {
       : AdaptiveThemeMode.light;
   AdaptiveTheme.of(context).setThemeMode(
     newThemeMode,
+  );
+}
+
+Future<void> clearStoredMessages(BuildContext context) async {
+  final SharedPreferences prefs = await SharedPreferences.getInstance();
+
+  showDialog(
+    context: context,
+    builder: (BuildContext context) {
+      return AlertDialog(
+        title: Text('Confirm'),
+        content: Text('Are you sure you want to clear stored messages?'),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
+            child: Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () async {
+              await prefs.remove('messages');
+              Navigator.pop(context);
+              Navigator.popAndPushNamed(
+                context,
+                '/',
+              );
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                    content: Text(
+                  'Success! History has been deleted!',
+                  style: TextStyle(
+                    color: Colors.red,
+                  ),
+                )),
+              );
+            },
+            child: Text('Clear'),
+          ),
+        ],
+      );
+    },
   );
 }
