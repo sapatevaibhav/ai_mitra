@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:ai_mitra/utils.dart';
 
 void openSettingsPopup(
@@ -17,8 +18,18 @@ void openSettingsPopup(
             mainAxisSize: MainAxisSize.min,
             children: [
               ListTile(
-                title: const Text(
-                  'Change API Key',
+                title: const Row(
+                  children: [
+                    Icon(
+                      Icons.vpn_key,
+                    ),
+                    SizedBox(
+                      width: 10,
+                    ),
+                    Text(
+                      'Change API Key',
+                    ),
+                  ],
                 ),
                 onTap: () {
                   Navigator.of(context).pop();
@@ -29,10 +40,37 @@ void openSettingsPopup(
                   );
                 },
               ),
+              ListTile(
+                title: const Row(
+                  children: [
+                    Icon(
+                      Icons.dark_mode,
+                    ),
+                    SizedBox(
+                      width: 10,
+                    ),
+                    Text(
+                      'Switch theme',
+                    ),
+                  ],
+                ),
+                onTap: () {
+                  Navigator.of(context).pop();
+                  _switchTheme(context);
+                },
+              ),
             ],
           ),
         ),
       );
     },
   );
+}
+
+void _switchTheme(BuildContext context) {
+  final themeMode = AdaptiveTheme.of(context).mode;
+  final newThemeMode = themeMode == AdaptiveThemeMode.light
+      ? AdaptiveThemeMode.dark
+      : AdaptiveThemeMode.light;
+  AdaptiveTheme.of(context).setThemeMode(newThemeMode);
 }
