@@ -74,41 +74,53 @@ class DialogUtils {
               ),
               actions: <Widget>[
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     TextButton(
                       onPressed: () {
-                        launch(
-                          'https://makersuite.google.com/app/apikey',
-                        );
+                        Navigator.pop(context);
                       },
-                      child: const Text('Get Key'),
+                      child: const Text('Cancel'),
                     ),
-                    TextButton(
-                      child: const Text('Save'),
-                      onPressed: () async {
-                        if (enteredApiKey != null &&
-                            enteredApiKey!.isNotEmpty) {
-                          await prefs.setString('api_key', enteredApiKey!);
-                          Navigator.of(context).pop();
-                          callback(enteredApiKey!);
-                          Navigator.pushReplacement(
-                            context,
-                            MaterialPageRoute(
-                              builder: (BuildContext context) =>
-                                  const Main(),
-                            ),
-                          );
-                        } else {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text(
-                                'Please enter a valid API Key',
+                    Row(
+                      children: [
+                        TextButton(
+                          onPressed: () {
+                            launchUrl(
+                              Uri.parse(
+                                'https://makersuite.google.com/app/apikey',
                               ),
-                            ),
-                          );
-                        }
-                      },
+                            );
+                          },
+                          child: const Text('Get Key'),
+                        ),
+                        TextButton(
+                          child: const Text('Save'),
+                          onPressed: () async {
+                            if (enteredApiKey != null &&
+                                enteredApiKey!.isNotEmpty) {
+                              await prefs.setString('api_key', enteredApiKey!);
+                              Navigator.of(context).pop();
+                              callback(enteredApiKey!);
+                              Navigator.pushReplacement(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (BuildContext context) =>
+                                      const Main(),
+                                ),
+                              );
+                            } else {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text(
+                                    'Please enter a valid API Key',
+                                  ),
+                                ),
+                              );
+                            }
+                          },
+                        ),
+                      ],
                     ),
                   ],
                 ),
