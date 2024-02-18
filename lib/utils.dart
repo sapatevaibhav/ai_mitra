@@ -3,7 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class DialogUtils {
   static Future<void> showApiKeyDialog(BuildContext context, String? apiKey,
-      Function() initializeGenerativeModel) async {
+      void Function(String) callback) async {
     String? _apiKey = apiKey;
     showDialog(
       context: context,
@@ -24,12 +24,12 @@ class DialogUtils {
               child: const Text('Save'),
               onPressed: () async {
                 if (_apiKey != null && _apiKey!.isNotEmpty) {
-                  debugPrint("Verifying API Key: $_apiKey");
                   final SharedPreferences prefs =
                       await SharedPreferences.getInstance();
                   await prefs.setString('api_key', _apiKey!);
                   Navigator.of(context).pop();
-                  initializeGenerativeModel();
+                  callback(
+                      _apiKey!); // Call the callback function with the entered API key
                 } else {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(

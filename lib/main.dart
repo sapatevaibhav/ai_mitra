@@ -1,6 +1,6 @@
 import 'package:ai_mitra/settings.dart';
-import 'package:ai_mitra/utils.dart';
 import 'package:flutter/material.dart';
+import 'package:ai_mitra/utils.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:google_generative_ai/google_generative_ai.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -10,7 +10,7 @@ void main() {
 }
 
 class GenerativeAISample extends StatelessWidget {
-  const GenerativeAISample({super.key});
+  const GenerativeAISample({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -24,13 +24,13 @@ class GenerativeAISample extends StatelessWidget {
         ),
         useMaterial3: true,
       ),
-      home: const ChatScreen(title: 'AI Mitra',),
+      home: const ChatScreen(title: 'AI Mitra'),
     );
   }
 }
 
 class ChatScreen extends StatefulWidget {
-  const ChatScreen({super.key, required this.title});
+  const ChatScreen({Key? key, required this.title}) : super(key: key);
 
   final String title;
 
@@ -39,26 +39,28 @@ class ChatScreen extends StatefulWidget {
 }
 
 class _ChatScreenState extends State<ChatScreen> {
-   late String _apiKey = ''; 
-GenerativeModel? model; 
+  late final String _apiKey = '';
+  GenerativeModel? model;
   late ChatSession chat;
+
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.title),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.settings),
-            onPressed: () {
-              openSettingsPopup(context, _apiKey, _initializeGenerativeModel);
-            },
-          ),
-        ],
-      ),
-      body: const ChatWidget(),
-    );
-  }
+    Widget build(BuildContext context) {
+      return Scaffold(
+        appBar: AppBar(
+          title: Text(widget.title),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.settings),
+              onPressed: () {
+                openSettingsPopup(context, _apiKey, (String _) => _initializeGenerativeModel() 
+                );
+              },
+            ),
+          ],
+        ),
+        body: const ChatWidget(),
+      );
+    }
 
   void _initializeGenerativeModel() {
     setState(() {
@@ -69,17 +71,17 @@ GenerativeModel? model;
       chat = model!.startChat();
     });
   }
-
 }
+
 class ChatWidget extends StatefulWidget {
-  const ChatWidget({super.key});
+  const ChatWidget({Key? key}) : super(key: key);
 
   @override
   State<ChatWidget> createState() => _ChatWidgetState();
 }
 
 class _ChatWidgetState extends State<ChatWidget> {
-    GenerativeModel? model; 
+  GenerativeModel? model;
   late ChatSession chat;
   final ScrollController _scrollController = ScrollController();
   final TextEditingController _textController = TextEditingController();
@@ -91,14 +93,15 @@ class _ChatWidgetState extends State<ChatWidget> {
   void initState() {
     super.initState();
     _getApiKey();
-   
   }
-   Future<void> _getApiKey() async {
+
+  Future<void> _getApiKey() async {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
     final storedApiKey = prefs.getString('api_key');
     if (storedApiKey == null) {
-      DialogUtils.showApiKeyDialog(
-          context, _apiKey, _initializeGenerativeModel);    } else {
+      await DialogUtils.showApiKeyDialog(
+          context, _apiKey, _setAndInitializeGenerativeModel);
+    } else {
       setState(() {
         _apiKey = storedApiKey;
       });
@@ -106,44 +109,13 @@ class _ChatWidgetState extends State<ChatWidget> {
     }
   }
 
- 
-  // Future<void> _showApiKeyDialog() async {
-  //   showDialog(
-  //     context: context,
-  //     builder: (BuildContext context) {
-  //       return AlertDialog(
-  //         title: const Text('Enter API Key'),
-  //         content: TextField(
-  //           controller: TextEditingController(),
-  //           onChanged: (value) {
-  //             _apiKey = value;
-  //           },
-  //           decoration: const InputDecoration(
-  //             hintText: 'Enter your API Key',
-  //           ),
-  //         ),
-  //         actions: <Widget>[
-  //           TextButton(
-  //             child: const Text('Save'),
-  //             onPressed: () async {
-  //               if (_apiKey != null && _apiKey!.isNotEmpty) {
-  //                 final SharedPreferences prefs =
-  //                     await SharedPreferences.getInstance();
-  //                 await prefs.setString('api_key', _apiKey!);
-  //                 Navigator.of(context).pop();
-  //                 _initializeGenerativeModel();
-  //               } else {
-  //                 ScaffoldMessenger.of(context).showSnackBar(
-  //                   const SnackBar(content: Text('Please enter a valid API Key')),
-  //                 );
-  //               }
-  //             },
-  //           ),
-  //         ],
-  //       );
-  //     },
-  //   );
-  // }
+  void _setAndInitializeGenerativeModel(String apiKey) {
+    setState(() {
+      _apiKey = apiKey;
+    });
+    _initializeGenerativeModel();
+  }
+
   void _initializeGenerativeModel() {
     setState(() {
       model = GenerativeModel(
@@ -153,12 +125,6 @@ class _ChatWidgetState extends State<ChatWidget> {
       chat = model!.startChat();
     });
   }
-
-  // void _resetGenerativeModel() {
-  //   setState(() {
-  //     _model = null;
-  //   });
-  // }
 
   @override
   Widget build(BuildContext context) {
@@ -301,7 +267,8 @@ class _ChatWidgetState extends State<ChatWidget> {
               onPressed: () {
                 Navigator.of(context).pop();
                 DialogUtils.showApiKeyDialog(
-                    context, _apiKey, _initializeGenerativeModel);              },
+                    context, _apiKey, _setAndInitializeGenerativeModel);
+              },
               child: const Text('OK'),
             )
           ],
@@ -316,10 +283,10 @@ class MessageWidget extends StatelessWidget {
   final bool isFromUser;
 
   const MessageWidget({
-    super.key,
+    Key? key,
     required this.text,
     required this.isFromUser,
-  });
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
