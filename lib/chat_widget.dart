@@ -1,11 +1,10 @@
-// ignore_for_file: use_build_context_synchronously
-
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:google_generative_ai/google_generative_ai.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:speech_to_text/speech_to_text.dart';
 import 'utils.dart';
 
 class ChatWidget extends StatefulWidget {
@@ -24,11 +23,21 @@ class _ChatWidgetState extends State<ChatWidget> {
   bool _loading = false;
   String? _apiKey;
   List<Message> messages = [];
+  final SpeechToText _speech = SpeechToText();
 
   @override
   void initState() {
     super.initState();
     _getApiKey();
+    _initSpeech();
+  }
+
+  Future<void> _initSpeech() async {
+    await _speech.initialize(onStatus: (status) {
+      print('Speech status: $status');
+    }, onError: (error) {
+      print('Speech error: $error');
+    });
   }
 
   Future<void> _getApiKey() async {
@@ -99,6 +108,29 @@ class _ChatWidgetState extends State<ChatWidget> {
       focusedBorder: OutlineInputBorder(
         borderRadius: const BorderRadius.all(Radius.circular(14)),
         borderSide: BorderSide(color: Theme.of(context).colorScheme.secondary),
+      ),
+      suffixIcon: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          IconButton(
+            icon: const Icon(Icons.mic),
+            onPressed: () {
+              if (_speech.isAvailable) {
+                _speech.listen(
+                  onResult: (result) {
+                    if (result.finalResult) {
+                      setState(() {
+                        _textController.text = result.recognizedWords;
+                      });
+                      _sendChatMessage(result.recognizedWords);
+                    }
+                  },
+                  listenFor: const Duration(seconds: 5),
+                );
+              }
+            },
+          ),
+        ],
       ),
     );
 
