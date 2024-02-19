@@ -73,6 +73,12 @@ class _ChatWidgetState extends State<ChatWidget> {
               }
             },
           ),
+          IconButton(
+            onPressed: () {},
+            icon: const Icon(
+              Icons.image,
+            ),
+          )
         ],
       ),
     );
@@ -140,11 +146,16 @@ class _ChatWidgetState extends State<ChatWidget> {
   }
 
   void _scrollToBottom() {
-    _scrollController.animateTo(
-      _scrollController.position.maxScrollExtent,
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeOut,
-    );
+    if (_scrollController.hasClients &&
+        _scrollController.position.extentAfter == 0) {
+      _scrollController.animateTo(
+        _scrollController.position.maxScrollExtent,
+        duration: const Duration(
+          milliseconds: 300,
+        ),
+        curve: Curves.easeOut,
+      );
+    }
   }
 
   Future<void> _initSpeech() async {
