@@ -105,8 +105,8 @@ class _ChatWidgetState extends State<ChatWidget> {
             .map((messageJson) => Message.fromJson(messageJson))
             .toList();
       });
-      _scrollToBottom();
     }
+    _scrollToBottom();
   }
 
   Future<void> _saveMessages() async {
@@ -244,9 +244,6 @@ class _ChatWidgetState extends State<ChatWidget> {
           messages.add(Message(sender: Sender.Bot, text: text));
           _saveMessages();
         });
-
-        await Future.delayed(Duration(milliseconds: 100));
-        _scrollToBottom();
       }
     } catch (e) {
       _showError(e.toString());
@@ -254,6 +251,8 @@ class _ChatWidgetState extends State<ChatWidget> {
       _textController.clear();
       _textFieldFocus.requestFocus();
     }
+    await Future.delayed(const Duration(milliseconds: 100));
+    _scrollToBottom();
   }
 
   void _showError(String message) {
@@ -281,16 +280,15 @@ class _ChatWidgetState extends State<ChatWidget> {
   }
 
   void _scrollToBottom() {
-    if (_scrollController.hasClients &&
-        _scrollController.position.extentAfter == 0) {
-      _scrollController.animateTo(
-        _scrollController.position.maxScrollExtent,
-        duration: const Duration(
-          milliseconds: 300,
-        ),
-        curve: Curves.easeOut,
-      );
-    }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_scrollController.hasClients) {
+        _scrollController.animateTo(
+          _scrollController.position.maxScrollExtent,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+        );
+      }
+    });
   }
 
   Future<void> _getImageFromSource() async {
@@ -310,7 +308,7 @@ class _ChatWidgetState extends State<ChatWidget> {
       final String imageType =
           imagePath.substring(imagePath.lastIndexOf('.') + 1).toLowerCase();
 
-      if (['png', 'jpeg', 'webp', 'heic', 'heif'].contains(imageType)) {
+      if (['jpg', 'png', 'jpeg', 'webp', 'heic', 'heif'].contains(imageType)) {
         final File imageFile = File(imagePath);
         await sendImageToBot(imageFile);
       } else {
@@ -375,7 +373,6 @@ class _ChatWidgetState extends State<ChatWidget> {
         _loading = false;
         messages.add(Message(sender: Sender.Bot, text: combinedResponse));
         _saveMessages();
-        _scrollToBottom();
       });
     } catch (e) {
       setState(() {
@@ -383,5 +380,6 @@ class _ChatWidgetState extends State<ChatWidget> {
       });
       _showError(e.toString());
     }
+    _scrollToBottom();
   }
 }
