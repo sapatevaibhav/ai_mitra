@@ -139,27 +139,11 @@ class _ChatWidgetState extends State<ChatWidget> {
         children: [
           IconButton(
             icon: const Icon(Icons.photo_library),
-            onPressed: () {
-              _getImageFromSource();
-            },
+            onPressed: _getImageFromSource,
           ),
           IconButton(
             icon: const Icon(Icons.mic),
-            onPressed: () {
-              if (_speech.isAvailable) {
-                _speech.listen(
-                  onResult: (result) {
-                    if (result.finalResult) {
-                      setState(() {
-                        _textController.text = result.recognizedWords;
-                      });
-                      _sendChatMessage(result.recognizedWords);
-                    }
-                  },
-                  listenFor: const Duration(seconds: 5),
-                );
-              }
-            },
+            onPressed: _startListening,
           ),
         ],
       ),
@@ -198,9 +182,7 @@ class _ChatWidgetState extends State<ChatWidget> {
                     focusNode: _textFieldFocus,
                     decoration: textFieldDecoration,
                     controller: _textController,
-                    onSubmitted: (String value) {
-                      _sendChatMessage(value);
-                    },
+                    onSubmitted: _sendChatMessage,
                   ),
                 ),
                 const SizedBox.square(
@@ -225,60 +207,6 @@ class _ChatWidgetState extends State<ChatWidget> {
     );
   }
 
-  Future<void> _sendChatMessage(String message) async {
-    setState(() {
-      _loading = true;
-    });
-
-    try {
-      var response = await chat.sendMessage(Content.text(message));
-      var text = response.text;
-
-      if (text == null) {
-        _showError('No response from API.');
-        return;
-      } else {
-        setState(() {
-          _loading = false;
-          messages.add(Message(sender: Sender.User, text: message));
-          messages.add(Message(sender: Sender.Bot, text: text));
-          _saveMessages();
-        });
-      }
-    } catch (e) {
-      _showError(e.toString());
-    } finally {
-      _textController.clear();
-      _textFieldFocus.requestFocus();
-    }
-    await Future.delayed(const Duration(milliseconds: 100));
-    _scrollToBottom();
-  }
-
-  void _showError(String message) {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text('Something went wrong'),
-          content: SingleChildScrollView(
-            child: SelectableText(message),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-                DialogUtils.showApiKeyDialog(
-                    context, _apiKey, _setAndInitializeGenerativeModel);
-              },
-              child: const Text('OK'),
-            )
-          ],
-        );
-      },
-    );
-  }
-
   void _scrollToBottom() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_scrollController.hasClients) {
@@ -291,30 +219,68 @@ class _ChatWidgetState extends State<ChatWidget> {
     });
   }
 
+  void _startListening() {
+    if (_speech.isAvailable) {
+      _speech.listen(
+        onResult: (result) {
+          if (result.finalResult) {
+            setState(() {
+              _textController.text = result.recognizedWords;
+            });
+            _sendChatMessage(result.recognizedWords);
+          }
+        },
+        listenFor: const Duration(seconds: 5),
+      );
+    }
+  }
+
   Future<void> _getImageFromSource() async {
     setState(() {
       _loading = true;
     });
 
-    final XFile? pickedFile = await _picker.pickImage(
-      source: ImageSource.gallery,
-      imageQuality: 80,
-      maxWidth: 1920,
-      maxHeight: 1080,
+    final ImageSource? source = await showDialog<ImageSource>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Select Image Source'),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () => Navigator.pop(context, ImageSource.camera),
+              child: const Text('Camera'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(context, ImageSource.gallery),
+              child: const Text('Gallery'),
+            ),
+          ],
+        );
+      },
     );
 
-    if (pickedFile != null) {
-      final String imagePath = pickedFile.path;
-      final String imageType =
-          imagePath.substring(imagePath.lastIndexOf('.') + 1).toLowerCase();
+    if (source != null) {
+      final XFile? pickedFile = await _picker.pickImage(
+        source: source,
+        imageQuality: 80,
+        maxWidth: 1920,
+        maxHeight: 1080,
+      );
 
-      if (['jpg', 'png', 'jpeg', 'webp', 'heic', 'heif'].contains(imageType)) {
-        final File imageFile = File(imagePath);
-        await sendImageToBot(imageFile);
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Unsupported image type')),
-        );
+      if (pickedFile != null) {
+        final String imagePath = pickedFile.path;
+        final String imageType =
+            imagePath.substring(imagePath.lastIndexOf('.') + 1).toLowerCase();
+
+        if (['jpg', 'png', 'jpeg', 'webp', 'heic', 'heif']
+            .contains(imageType)) {
+          final File imageFile = File(imagePath);
+          await sendImageToBot(imageFile);
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Unsupported image type')),
+          );
+        }
       }
     }
 
@@ -359,7 +325,6 @@ class _ChatWidgetState extends State<ChatWidget> {
       final responses = <String>[];
       for (final chunk in chunks) {
         final imagePart = DataPart('image/jpeg', chunk);
-
         final response = await model.generateContent([
           Content.multi([prompt, imagePart])
         ]);
@@ -371,6 +336,7 @@ class _ChatWidgetState extends State<ChatWidget> {
 
       setState(() {
         _loading = false;
+        messages.add(Message(sender: Sender.User, text: 'You sent an image'));
         messages.add(Message(sender: Sender.Bot, text: combinedResponse));
         _saveMessages();
       });
@@ -381,5 +347,64 @@ class _ChatWidgetState extends State<ChatWidget> {
       _showError(e.toString());
     }
     _scrollToBottom();
+  }
+
+  Future<void> _sendChatMessage(String message) async {
+    setState(() {
+      _loading = true;
+    });
+
+    try {
+      if (message.isNotEmpty) {
+        var response = await chat.sendMessage(Content.text(message));
+        var text = response.text;
+
+        if (text == null) {
+          _showError('No response from API.');
+          return;
+        }
+
+        setState(() {
+          messages.add(Message(sender: Sender.User, text: message));
+          messages.add(Message(sender: Sender.Bot, text: text));
+          _saveMessages();
+        });
+      }
+
+      _textController.clear();
+      _textFieldFocus.requestFocus();
+    } catch (e) {
+      _showError(e.toString());
+    } finally {
+      setState(() {
+        _loading = false;
+      });
+      await Future.delayed(const Duration(milliseconds: 100));
+      _scrollToBottom();
+    }
+  }
+
+  void _showError(String message) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Something went wrong'),
+          content: SingleChildScrollView(
+            child: SelectableText(message),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                DialogUtils.showApiKeyDialog(
+                    context, _apiKey, _setAndInitializeGenerativeModel);
+              },
+              child: const Text('OK'),
+            )
+          ],
+        );
+      },
+    );
   }
 }

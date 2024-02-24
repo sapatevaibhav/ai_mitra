@@ -10,16 +10,19 @@ enum Sender {
 class Message {
   final Sender sender;
   final String text;
+  final String? imagePath;
 
   Message({
     required this.sender,
     required this.text,
+    this.imagePath,
   });
 
   String toJson() {
     return jsonEncode({
       'sender': sender.index,
       'text': text,
+      'imagePath': imagePath,
     });
   }
 
@@ -28,6 +31,7 @@ class Message {
     return Message(
       sender: Sender.values[map['sender']],
       text: map['text'],
+      imagePath: map['imagePath'],
     );
   }
 }
@@ -35,40 +39,40 @@ class Message {
 class MessageWidget extends StatelessWidget {
   final Message message;
 
-  const MessageWidget({
-    Key? key,
-    required this.message,
-  }) : super(key: key);
+  const MessageWidget({Key? key, required this.message}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    final isUserMessage = message.sender == Sender.User;
-    return Align(
-      alignment: isUserMessage ? Alignment.centerRight : Alignment.centerLeft,
-      child: Container(
-        constraints: const BoxConstraints(maxWidth: 600),
-        margin: const EdgeInsets.only(bottom: 8),
-        decoration: BoxDecoration(
-          color: isUserMessage
-              ? Theme.of(context).colorScheme.primary.withOpacity(0.2)
-              : Theme.of(context).colorScheme.secondary.withOpacity(0.2),
-          borderRadius: BorderRadius.only(
-            topLeft: Radius.circular(isUserMessage ? 18 : 0),
-            topRight: Radius.circular(isUserMessage ? 0 : 18),
-            bottomLeft: const Radius.circular(18),
-            bottomRight: const Radius.circular(18),
+    return _buildTextMessage(context);
+  }
+
+  Widget _buildTextMessage(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 5.0),
+      child: Align(
+        alignment: message.sender == Sender.User
+            ? Alignment.centerRight
+            : Alignment.centerLeft,
+        child: Container(
+          padding: const EdgeInsets.all(10.0),
+          decoration: BoxDecoration(
+            color: message.sender == Sender.User
+                ? Colors.blueAccent.withOpacity(.4)
+                : Colors.greenAccent.withOpacity(.4),
+            borderRadius: BorderRadius.only(
+              topLeft:
+                  Radius.circular(message.sender == Sender.Bot ? 0.0 : 15.0),
+              topRight: const Radius.circular(15.0),
+              bottomLeft: const Radius.circular(15.0),
+              bottomRight:
+                  Radius.circular(message.sender == Sender.User ? 0.0 : 15.0),
+            ),
           ),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(8.0),
           child: MarkdownBody(
-              selectable: true,
-              data: message.text,
-              styleSheet: isUserMessage
-                  ? MarkdownStyleSheet(p: const TextStyle())
-                  : MarkdownStyleSheet(
-                      p: const TextStyle(),
-                    )),
+            data: message.text,
+            selectable: true,
+            styleSheet: MarkdownStyleSheet(),
+          ),
         ),
       ),
     );
