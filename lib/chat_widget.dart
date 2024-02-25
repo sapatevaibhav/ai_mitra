@@ -3,11 +3,13 @@
 import 'dart:async';
 import 'dart:io';
 import 'dart:typed_data';
+import 'package:ai_mitra/sender_adapter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:google_generative_ai/google_generative_ai.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:hive/hive.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:speech_to_text/speech_to_text.dart';
 import 'utils.dart';
 import 'message.dart';
@@ -22,26 +24,44 @@ class ChatWidget extends StatefulWidget {
 class _ChatWidgetState extends State<ChatWidget> {
   GenerativeModel? model;
   late ChatSession chat;
+  List<Message> messages = [];
+
   late ScrollController _scrollController;
   final TextEditingController _textController = TextEditingController();
   final FocusNode _textFieldFocus = FocusNode();
   bool _loading = false;
   String? _apiKey;
-  List<Message> messages = [];
+  late Box<Message>? messageBox;
   final SpeechToText _speech = SpeechToText();
   final ImagePicker _picker = ImagePicker();
 
   @override
   void initState() {
     super.initState();
-    _getApiKey();
-    _initSpeech();
     _scrollController = ScrollController();
+    _initHive().then((_) {
+      _getApiKey();
+      _initSpeech();
+    });
+  }
+
+  Future<void> _initHive() async {
+    final appDocumentDir = await getApplicationDocumentsDirectory();
+    Hive.init(appDocumentDir.path);
+    if (!Hive.isAdapterRegistered(0)) {
+      Hive.registerAdapter(MessageAdapter());
+    }
+    if (!Hive.isAdapterRegistered(1)) {
+      
+      Hive.registerAdapter(SenderAdapter());
+    }
+    messageBox = await Hive.openBox<Message>('messages');
   }
 
   @override
   void dispose() {
     _scrollController.dispose();
+    Hive.close();
     super.dispose();
   }
 
@@ -61,8 +81,8 @@ class _ChatWidgetState extends State<ChatWidget> {
   }
 
   Future<void> _getApiKey() async {
-    final SharedPreferences prefs = await SharedPreferences.getInstance();
-    final storedApiKey = prefs.getString('api_key');
+    final storedApiKeyBox = await Hive.openBox('api_key');
+    final storedApiKey = storedApiKeyBox.get('key');
     if (storedApiKey == null) {
       await DialogUtils.showApiKeyDialog(
         context,
@@ -71,13 +91,15 @@ class _ChatWidgetState extends State<ChatWidget> {
       );
     } else {
       setState(() {
-        _apiKey = storedApiKey;
+        _apiKey = storedApiKey.toString();
       });
       _initializeGenerativeModel();
     }
   }
 
   void _setAndInitializeGenerativeModel(String apiKey) {
+    final storedApiKeyBox = Hive.box('api_key');
+    storedApiKeyBox.put('key', apiKey);
     setState(() {
       _apiKey = apiKey;
     });
@@ -96,25 +118,20 @@ class _ChatWidgetState extends State<ChatWidget> {
   }
 
   Future<void> _loadMessages() async {
-    final SharedPreferences prefs = await SharedPreferences.getInstance();
-    final List<String>? messagesJson = prefs.getStringList('messages');
-
-    if (messagesJson != null) {
+    if (messageBox != null) {
+      final List<Message> savedMessages = messageBox!.values.toList();
       setState(() {
-        messages = messagesJson
-            .map((messageJson) => Message.fromJson(messageJson))
-            .toList();
+        messages = savedMessages.toList();
       });
+      _scrollToBottom();
+    } else {
+      _showError("Error loading messageBox");
     }
-    _scrollToBottom();
   }
 
   Future<void> _saveMessages() async {
-    final SharedPreferences prefs = await SharedPreferences.getInstance();
-    final List<String> messagesJson =
-        messages.map((message) => message.toJson()).toList();
-
-    await prefs.setStringList('messages', messagesJson);
+    await messageBox?.clear();
+    await messageBox?.addAll(messages);
   }
 
   @override
@@ -309,8 +326,8 @@ class _ChatWidgetState extends State<ChatWidget> {
         chunks.add(chunk);
       }
 
-      final SharedPreferences prefs = await SharedPreferences.getInstance();
-      final String? storedApiKey = prefs.getString('api_key');
+      final storedApiKeyBox = await Hive.openBox('api_key');
+      final String? storedApiKey = storedApiKeyBox.get('key');
       if (storedApiKey == null) {
         throw Exception('API key not found');
       }
@@ -335,8 +352,10 @@ class _ChatWidgetState extends State<ChatWidget> {
       final combinedResponse = responses.join(' ');
 
       setState(() {
-        _loading = false;
-        messages.add(Message(sender: Sender.User, text: 'You sent an image'));
+        messages.add(Message(
+          sender: Sender.User,
+          text: 'You sent an image',
+        ));
         messages.add(Message(sender: Sender.Bot, text: combinedResponse));
         _saveMessages();
       });
@@ -364,9 +383,16 @@ class _ChatWidgetState extends State<ChatWidget> {
           return;
         }
 
+        var sentMessage = Message(
+          sender: Sender.User,
+          text: message,
+        );
         setState(() {
-          messages.add(Message(sender: Sender.User, text: message));
-          messages.add(Message(sender: Sender.Bot, text: text));
+          messages.add(sentMessage);
+          messages.add(Message(
+            sender: Sender.Bot,
+            text: text,
+          ));
           _saveMessages();
         });
       }

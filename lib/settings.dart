@@ -1,16 +1,17 @@
-// ignore_for_file: prefer_const_constructors, use_build_context_synchronously
+// ignore_for_file: use_build_context_synchronously
 
+import 'package:ai_mitra/message.dart';
 import 'package:flutter/material.dart';
 import 'package:adaptive_theme/adaptive_theme.dart';
-import 'package:ai_mitra/utils.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:hive/hive.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'utils.dart';
 
 void openSettingsPopup(
   BuildContext context,
   String apiKey,
   Function(String) initializeGenerativeModel,
-) {
+) async {
   final isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
   showDialog(
@@ -52,9 +53,9 @@ void openSettingsPopup(
                       color: Colors.blue,
                     ),
                   ),
-                  onTap: () {
+                  onTap: () async {
                     Navigator.of(context).pop();
-                    DialogUtils.showApiKeyDialog(
+                    await DialogUtils.showApiKeyDialog(
                       context,
                       apiKey,
                       initializeGenerativeModel,
@@ -194,40 +195,42 @@ void _switchTheme(BuildContext context) {
 }
 
 Future<void> clearStoredMessages(BuildContext context) async {
-  final SharedPreferences prefs = await SharedPreferences.getInstance();
+  final HiveInterface hive = Hive;
+  final Box<Message> messageBox = await hive.openBox<Message>('messages');
 
   showDialog(
     context: context,
     builder: (BuildContext context) {
       return AlertDialog(
-        title: Text('Confirm'),
-        content: Text('Are you sure you want to clear stored messages?'),
+        title: const Text('Confirm'),
+        content: const Text('Are you sure you want to clear stored messages?'),
         actions: <Widget>[
           TextButton(
             onPressed: () {
               Navigator.of(context).pop();
             },
-            child: Text('Cancel'),
+            child: const Text('Cancel'),
           ),
           TextButton(
             onPressed: () async {
-              await prefs.remove('messages');
+              await messageBox.clear();
               Navigator.pop(context);
               Navigator.popAndPushNamed(
                 context,
                 '/',
               );
               ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                    content: Text(
-                  'Success! History has been deleted!',
-                  style: TextStyle(
-                    color: Colors.red,
+                const SnackBar(
+                  content: Text(
+                    'Success! History has been deleted!',
+                    style: TextStyle(
+                      color: Colors.red,
+                    ),
                   ),
-                )),
+                ),
               );
             },
-            child: Text('Clear'),
+            child: const Text('Clear'),
           ),
         ],
       );

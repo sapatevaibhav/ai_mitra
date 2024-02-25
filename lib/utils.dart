@@ -1,7 +1,6 @@
 // ignore_for_file: prefer_const_constructors, use_build_context_synchronously
-
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:hive/hive.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:ai_mitra/main.dart';
 import 'package:flutter/services.dart';
@@ -10,10 +9,9 @@ class DialogUtils {
   static Future<void> showApiKeyDialog(BuildContext context, String? apiKey,
       void Function(String) callback) async {
     String? enteredApiKey = apiKey;
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    String? currentApiKey = prefs.getString(
-      'api_key',
-    );
+    final apiKeyBox = await Hive.openBox('api_key');
+
+    String? currentApiKey = apiKeyBox.get('key') as String?;
 
     TextEditingController controller =
         TextEditingController(text: enteredApiKey);
@@ -37,16 +35,16 @@ class DialogUtils {
                       Expanded(
                         child: Text(
                           currentApiKey ?? 'No API Key',
-                          style: TextStyle(fontWeight: FontWeight.bold),
+                          style: const TextStyle(fontWeight: FontWeight.bold),
                         ),
                       ),
                       IconButton(
-                        icon: Icon(Icons.content_copy),
+                        icon: const Icon(Icons.content_copy),
                         onPressed: () {
                           Clipboard.setData(
                               ClipboardData(text: currentApiKey ?? ''));
                           ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
+                            const SnackBar(
                                 content: Text('API Key copied to clipboard')),
                           );
                         },
@@ -99,7 +97,7 @@ class DialogUtils {
                           onPressed: () async {
                             if (enteredApiKey != null &&
                                 enteredApiKey!.isNotEmpty) {
-                              await prefs.setString('api_key', enteredApiKey!);
+                              await apiKeyBox.put('key', enteredApiKey);
                               Navigator.of(context).pop();
                               callback(enteredApiKey!);
                               Navigator.pushReplacement(
