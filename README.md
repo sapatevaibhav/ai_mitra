@@ -1,6 +1,7 @@
 # AI मित्र
 
-Chat with Google Gemini using Text, Image, Voice.
+Chat with Google Gemini using Text, Image, Voice. <br>
+[![made-with-flutter](https://img.shields.io/badge/Made%20with-Flutter-1f425f.svg)](https://flutter.dev/) ![Release](https://img.shields.io/github/v/release/sapatevaibhav/ai_mitra)  <br>
 
 ## What is supported
 
@@ -8,7 +9,7 @@ Chat with Google Gemini using Text, Image, Voice.
 - ✅ Chat with Gallery Image.
 - ✅ Chat with Camera Image.
 - ✅ Chat with voice.
-- ❌ Chat with pdf file.
+- ❌ Chat with pdf file. (Working on it)
 
 ## Getting Started
 
@@ -66,12 +67,17 @@ To get started with the **this** app, follow these simple steps:
 >- DevTools: 2.28.2
 
 ### ScreenShots
-- home ![Home](Screenshots/01.png){height=200px}
-![text](Screenshots/03.png){height=200px}
-![text](Screenshots/02.png){height=200px}
-![text](Screenshots/04.png){height=200px}
-![text](Screenshots/05.png){height=200px}
-![text](Screenshots/06.png){height=200px}
-![text](Screenshots/07.png){height=200px}
-![text](Screenshots/08.png){height=200px}
-
+- home (light)<br>
+<img src="Screenshots/01.png" width=200>
+- home (dark)<br>
+<img src="Screenshots/02.png" width=200>
+- Select image<br>
+<img src="Screenshots/03.png" width=200>
+- Settings<br>
+<img src="Screenshots/04.png" width=200>
+- Change API key<br>
+<img src="Screenshots/05.png" width=200>
+- Clear History<br>
+<img src="Screenshots/06.png" width=200>
+- Useful snackbar<br>
+<img src="Screenshots/07.png" width=200>  <img src="Screenshots/08.png" width=200>
