@@ -23,7 +23,7 @@ class Main extends StatelessWidget {
         darkTheme: darkTheme,
         home: const Scaffold(
           body: ChatScreen(
-            title: 'AI Mitra',
+            title: 'AI मित्र',
           ),
         ),
       ),

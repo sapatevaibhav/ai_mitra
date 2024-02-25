@@ -3,7 +3,7 @@
         <uses-permission android:name="android.permission.RECORD_AUDIO"/>
         <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
     <application
-        android:label="ai_mitra"
+        android:label="AI मित्र"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity
