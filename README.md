@@ -1,21 +1,26 @@
 # AI मित्र
+<center>
+
+![logo](android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png)
+</center>
 
 Chat with Google Gemini using Text, Image, Voice. <br>
 [![made-with-flutter](https://img.shields.io/badge/Made%20with-Flutter-1f425f.svg)](https://flutter.dev/) ![Release](https://img.shields.io/github/v/release/sapatevaibhav/ai_mitra)  <br>
 
-## What is supported
-
-- ✅ Chat with Text.
-- ✅ Chat with Gallery Image.
-- ✅ Chat with Camera Image.
-- ✅ Chat with voice.
+### What is supported
+<center>
+- ✅ Chat with Text. <br>
+- ✅ Chat with Gallery Image.<br>
+- ✅ Chat with Camera Image.<br>
+- ✅ Chat with voice.<br>
 - ❌ Chat with pdf file. (Working on it)
+</center>
 
-## Getting Started
+### Getting Started
 
-> [!Requirenments]
-> - Flutter 
-> - Gemini's API Key
+Requirenments
+ - Flutter 
+ - Gemini's API Key
 
 
 To get started with the **this** app, follow these simple steps:
@@ -66,6 +71,12 @@ To get started with the **this** app, follow these simple steps:
 >- hive: ^2.2.3
 >- DevTools: 2.28.2
 
+### Image division
+
+As of currently there is limitation of Image size sent to Gemini to overcome this in this app I have implemented a logic which divides the entire image in the smaller chuncks of 1 MB each and then it is sent to Gemini here is breakdown of process.
+
+![Image](Screenshots/draw.svg)
+
 ### ScreenShots
 - home (light)<br>
 <img src="Screenshots/01.png" width=200>
@@ -80,4 +91,4 @@ To get started with the **this** app, follow these simple steps:
 - Clear History<br>
 <img src="Screenshots/06.png" width=200>
 - Useful snackbar<br>
-<img src="Screenshots/07.png" width=200>  <img src="Screenshots/08.png" width=200>
+<img src="Screenshots/07.png" width=200><img src="Screenshots/08.png" width=200>
