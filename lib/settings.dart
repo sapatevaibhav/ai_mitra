@@ -1,10 +1,10 @@
 // ignore_for_file: use_build_context_synchronously
 
-import 'package:ai_mitra/message.dart';
 import 'package:flutter/material.dart';
 import 'package:adaptive_theme/adaptive_theme.dart';
-import 'package:hive/hive.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:hive/hive.dart';
+import 'package:ai_mitra/message.dart';
 import 'utils.dart';
 
 void openSettingsPopup(
@@ -60,6 +60,7 @@ void openSettingsPopup(
                       apiKey,
                       initializeGenerativeModel,
                     );
+                    
                   },
                 ),
               ),
