@@ -1,21 +1,23 @@
-// ignore_for_file: use_build_context_synchronously
+// ignore_for_file: empty_catches, use_build_context_synchronously
 
 import 'dart:async';
 import 'dart:io';
 import 'dart:typed_data';
 import 'package:ai_mitra/sender_adapter.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:google_generative_ai/google_generative_ai.dart';
 import 'package:hive/hive.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:read_pdf_text/read_pdf_text.dart';
 import 'package:speech_to_text/speech_to_text.dart';
 import 'utils.dart';
 import 'message.dart';
 
 class ChatWidget extends StatefulWidget {
-  const ChatWidget({Key? key}) : super(key: key);
+  ChatWidget({Key? key}) : super(key: key);
 
   @override
   State<ChatWidget> createState() => _ChatWidgetState();
@@ -154,6 +156,10 @@ class _ChatWidgetState extends State<ChatWidget> {
         mainAxisSize: MainAxisSize.min,
         children: [
           IconButton(
+            icon: const Icon(Icons.picture_as_pdf),
+            onPressed: getPdfText,
+          ),
+          IconButton(
             icon: const Icon(Icons.photo_library),
             onPressed: _getImageFromSource,
           ),
@@ -198,7 +204,7 @@ class _ChatWidgetState extends State<ChatWidget> {
                     focusNode: _textFieldFocus,
                     decoration: textFieldDecoration,
                     controller: _textController,
-                    onSubmitted: _sendChatMessage,
+                    onSubmitted: sendChatMessage,
                   ),
                 ),
                 const SizedBox.square(
@@ -208,7 +214,7 @@ class _ChatWidgetState extends State<ChatWidget> {
                     ? const CircularProgressIndicator()
                     : IconButton(
                         onPressed: () {
-                          _sendChatMessage(_textController.text);
+                          sendChatMessage(_textController.text);
                         },
                         icon: Icon(
                           Icons.send,
@@ -243,7 +249,7 @@ class _ChatWidgetState extends State<ChatWidget> {
             setState(() {
               _textController.text = result.recognizedWords;
             });
-            _sendChatMessage(result.recognizedWords);
+            sendChatMessage(result.recognizedWords);
           }
         },
         listenFor: const Duration(seconds: 5),
@@ -305,7 +311,7 @@ class _ChatWidgetState extends State<ChatWidget> {
     });
   }
 
-Future<void> sendImageToBot(File imageFile) async {
+  Future<void> sendImageToBot(File imageFile) async {
     setState(() {
       _loading = true;
     });
@@ -397,8 +403,7 @@ Future<void> sendImageToBot(File imageFile) async {
     );
   }
 
-
-  Future<void> _sendChatMessage(String message) async {
+  Future<void> sendChatMessage(String message) async {
     setState(() {
       _loading = true;
     });
@@ -462,5 +467,35 @@ Future<void> sendImageToBot(File imageFile) async {
         );
       },
     );
+  }
+
+  Future<void> getPdfText() async {
+    try {
+      FilePickerResult? result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['pdf'],
+      );
+
+      if (result != null) {
+        String? pdfPath = result.files.single.path;
+
+        if (pdfPath != null) {
+          String text = await ReadPdfText.getPDFtext(pdfPath);
+
+          await _sendTextToBotInChunks(text);
+        }
+      }
+    } catch (e) {
+      _showError('Error reading PDF: $e');
+    }
+  }
+
+  Future<void> _sendTextToBotInChunks(String text) async {
+    const chunkSize = 1024;
+    for (var i = 0; i < text.length; i += chunkSize) {
+      var chunk = text.substring(
+          i, i + chunkSize < text.length ? i + chunkSize : text.length);
+      await sendChatMessage(chunk);
+    }
   }
 }
