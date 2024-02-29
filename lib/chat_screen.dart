@@ -52,7 +52,7 @@ class _ChatScreenState extends State<ChatScreen> {
           ),
         ],
       ),
-      body:  ChatWidget(),
+      body:  const ChatWidget(),
     );
   }
 

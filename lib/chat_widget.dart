@@ -17,7 +17,7 @@ import 'utils.dart';
 import 'message.dart';
 
 class ChatWidget extends StatefulWidget {
-  ChatWidget({Key? key}) : super(key: key);
+  const ChatWidget({Key? key}) : super(key: key);
 
   @override
   State<ChatWidget> createState() => _ChatWidgetState();
@@ -491,11 +491,51 @@ class _ChatWidgetState extends State<ChatWidget> {
   }
 
   Future<void> _sendTextToBotInChunks(String text) async {
-    const chunkSize = 1024;
-    for (var i = 0; i < text.length; i += chunkSize) {
-      var chunk = text.substring(
-          i, i + chunkSize < text.length ? i + chunkSize : text.length);
-      await sendChatMessage(chunk);
+     setState(() {
+      _loading = true;
+    });
+    try {
+      const chunkSize = 1024;
+      var chunks = <String>[];
+      for (var i = 0; i < text.length; i += chunkSize) {
+        var chunk = text.substring(
+            i, i + chunkSize < text.length ? i + chunkSize : text.length);
+        chunk = "Summarize it $chunk";
+        chunks.add(chunk);
+      }
+
+      setState(() {
+        messages.add(Message(
+          sender: Sender.User,
+          text: 'You sent PDF',
+        ));
+        _saveMessages();
+      });
+
+      var botResponses = <String>[];
+      for (var chunk in chunks) {
+        var response = await chat.sendMessage(Content.text(chunk));
+        var text = response.text;
+        if (text != null) {
+          botResponses.add(text);
+        }
+      }
+
+      var combinedResponse = botResponses.join();
+
+      setState(() {
+        messages.add(Message(
+          sender: Sender.Bot,
+          text: combinedResponse,
+        ));
+        _saveMessages();
+      });
+    } catch (e) {
+      _showError('Error sending PDF text: $e');
+    } finally {
+      setState(() {
+        _loading = false; 
+      });
     }
   }
 }
