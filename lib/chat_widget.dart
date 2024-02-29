@@ -52,7 +52,6 @@ class _ChatWidgetState extends State<ChatWidget> {
       Hive.registerAdapter(MessageAdapter());
     }
     if (!Hive.isAdapterRegistered(1)) {
-      
       Hive.registerAdapter(SenderAdapter());
     }
     messageBox = await Hive.openBox<Message>('messages');
@@ -306,12 +305,14 @@ class _ChatWidgetState extends State<ChatWidget> {
     });
   }
 
-  Future<void> sendImageToBot(File imageFile) async {
+Future<void> sendImageToBot(File imageFile) async {
     setState(() {
       _loading = true;
     });
 
     try {
+      String? customizedMessage = await _showMessageInputDialog();
+
       final imageBytes = await imageFile.readAsBytes();
 
       const chunkSize = 1024 * 1024;
@@ -354,7 +355,7 @@ class _ChatWidgetState extends State<ChatWidget> {
       setState(() {
         messages.add(Message(
           sender: Sender.User,
-          text: 'You sent an image',
+          text: customizedMessage ?? 'You sent an image',
         ));
         messages.add(Message(sender: Sender.Bot, text: combinedResponse));
         _saveMessages();
@@ -367,6 +368,35 @@ class _ChatWidgetState extends State<ChatWidget> {
     }
     _scrollToBottom();
   }
+
+  Future<String?> _showMessageInputDialog() async {
+    TextEditingController messageController = TextEditingController();
+
+    return showDialog<String>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Customize Message'),
+          content: TextField(
+            controller: messageController,
+            decoration: const InputDecoration(
+              hintText: 'Enter message...',
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                String? message = messageController.text.trim();
+                Navigator.of(context).pop(message.isNotEmpty ? message : null);
+              },
+              child: const Text('Send'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
 
   Future<void> _sendChatMessage(String message) async {
     setState(() {
