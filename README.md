@@ -6,6 +6,7 @@
 
 Chat with Google Gemini using Text, Image, Voice or pdf. <br>
 [![made-with-flutter](https://img.shields.io/badge/Made%20with-Flutter-1f425f.svg)](https://flutter.dev/) ![Release](https://img.shields.io/github/v/release/sapatevaibhav/ai_mitra)  <br>
+[VirusTotal Report](https://www.virustotal.com/gui/file/1cf05f88763352d13a9ed2fd506e4d436af3272aa528e91c779e352468919530/detection)
 
 ### What is supported
 <center>
