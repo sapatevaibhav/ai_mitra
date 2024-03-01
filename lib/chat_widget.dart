@@ -428,10 +428,10 @@ class _ChatWidgetState extends State<ChatWidget> {
             sender: Sender.Bot,
             text: text,
           ));
-          _saveMessages();
         });
       }
 
+      _saveMessages();
       _textController.clear();
       _textFieldFocus.requestFocus();
     } catch (e) {
@@ -491,7 +491,7 @@ class _ChatWidgetState extends State<ChatWidget> {
   }
 
   Future<void> _sendTextToBotInChunks(String text) async {
-     setState(() {
+    setState(() {
       _loading = true;
     });
     try {
@@ -534,7 +534,7 @@ class _ChatWidgetState extends State<ChatWidget> {
       _showError('Error sending PDF text: $e');
     } finally {
       setState(() {
-        _loading = false; 
+        _loading = false;
       });
     }
   }
