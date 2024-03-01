@@ -4,7 +4,7 @@
 ![logo](android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png)
 </center>
 
-Chat with Google Gemini using Text, Image, Voice. <br>
+Chat with Google Gemini using Text, Image, Voice or pdf. <br>
 [![made-with-flutter](https://img.shields.io/badge/Made%20with-Flutter-1f425f.svg)](https://flutter.dev/) ![Release](https://img.shields.io/github/v/release/sapatevaibhav/ai_mitra)  <br>
 
 ### What is supported
@@ -13,7 +13,7 @@ Chat with Google Gemini using Text, Image, Voice. <br>
 - ✅ Chat with Gallery Image.<br>
 - ✅ Chat with Camera Image.<br>
 - ✅ Chat with voice.<br>
-- ❌ Chat with pdf file. (Working on it)
+- ✅ Chat with pdf file (Experimental).
 </center>
 
 ### Getting Started
@@ -66,10 +66,10 @@ To get started with the **this** app, follow these simple steps:
 >- speech_to_text: ^6.6.0
 >- image_picker: ^1.0.7
 >- camera: ^0.10.5+9
->- path_provider: ^2.1.2
->- path: ^1.8.3
 >- hive: ^2.2.3
 >- DevTools: 2.28.2
+>- read_pdf_text: ^0.2.1
+>- file_picker: ^6.1.1
 
 ### Image division
 
@@ -91,4 +91,7 @@ As of currently there is limitation of Image size sent to Gemini to overcome thi
 - Clear History<br>
 <img src="Screenshots/06.png" width=200>
 - Useful snackbar<br>
-<img src="Screenshots/07.png" width=200><img src="Screenshots/08.png" width=200>
+<img src="Screenshots/07.png" width=200>
+<img src="Screenshots/08.png" width=200>
+- File picker (PDF)<br>
+<img src="Screenshots/09.png" width=200>
