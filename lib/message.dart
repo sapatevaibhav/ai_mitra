@@ -44,10 +44,11 @@ class MessageWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return _buildTextMessage(context);
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    return _buildTextMessage(context, isDarkMode);
   }
 
-  Widget _buildTextMessage(BuildContext context) {
+  Widget _buildTextMessage(BuildContext context, bool isDarkMode) {
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 5.0),
       child: Column(
@@ -59,8 +60,12 @@ class MessageWidget extends StatelessWidget {
             padding: const EdgeInsets.all(10.0),
             decoration: BoxDecoration(
               color: message.sender == Sender.User
-                  ? Colors.blueAccent.withOpacity(.4)
-                  : Colors.greenAccent.withOpacity(.4),
+                  ? isDarkMode
+                      ? Colors.blueAccent.withOpacity(.2)
+                      : Colors.blueAccent.withOpacity(.4)
+                  : isDarkMode
+                      ? Colors.greenAccent.withOpacity(.2)
+                      : Colors.greenAccent.withOpacity(.4),
               borderRadius: BorderRadius.only(
                 topLeft:
                     Radius.circular(message.sender == Sender.Bot ? 0.0 : 15.0),

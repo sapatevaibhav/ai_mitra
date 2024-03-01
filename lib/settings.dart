@@ -60,7 +60,6 @@ void openSettingsPopup(
                       apiKey,
                       initializeGenerativeModel,
                     );
-                    
                   },
                 ),
               ),
@@ -173,6 +172,16 @@ void openSettingsPopup(
                     Navigator.of(context).pop();
                     clearStoredMessages(context);
                   },
+                ),
+              ),
+              const SizedBox(
+                height: 25,
+              ),
+              const Text(
+                "made by sapatevaibhav",
+                style: TextStyle(
+                  // fontWeight: FontWeight.bold,
+                  fontSize: 15,
                 ),
               ),
             ],
